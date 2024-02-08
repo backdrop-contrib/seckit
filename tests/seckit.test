@@ -491,8 +491,6 @@ class SecKitTestCase extends BackdropWebTestCase {
   public function testXframeOptionsIsDisabled() {
     $form['clickjacking[x_frame]'] = SECKIT_X_FRAME_DISABLE;
     $this->backdropPost('admin/config/system/seckit', $form, t('Save configuration'));
-    debug(SECKIT_X_FRAME_DISABLE);
-    debug($this->backdropGetHeader('X-Frame-Options'));
     $this->assertFalse($this->backdropGetHeader('X-Frame-Options'),
       t('X-Frame-Options is disabled.'));
   }
