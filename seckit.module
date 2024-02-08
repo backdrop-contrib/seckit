@@ -895,6 +895,11 @@ function _seckit_get_options($reset = FALSE, $alter = TRUE) {
     );
   }
 
+  // Account for a 0 value being interpreted as empty, overwritten by defaults.
+  if ($config->get('clickjacking.x_frame') === SECKIT_X_FRAME_DISABLE) {
+    $options['clickjacking']['x_frame'] = SECKIT_X_FRAME_DISABLE;
+  }
+
   // Ensure there is a non-empty value for the CSP default-src.
   $csp_defaults = $defaults['xss']['csp'];
   if (!$options['xss']['csp']['directives']['default-src']) {
