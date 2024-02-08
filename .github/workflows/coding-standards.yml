@@ -1,37 +1,50 @@
-name: Coding Standards
-on: [push, pull_request]
+name: Coding standards
+on:
+  pull_request:
+    branches: [1.x-1.x]
+
 jobs:
   phpcs:
     name: Run phpcs
     runs-on: ubuntu-20.04
     steps:
-      - name: Setup PHP
+      - name: Setup PHP with CodeSniffer tool
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4'
-          coverage: none
+          php-version: '8.1'
+          tools: phpcs:3.7
 
-      - uses: actions/checkout@v2
-
-      - name: Get composer cache directory
-        id: composer-cache
-        run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
-
-      - name: Cache composer directory
-        uses: actions/cache@v2
+      # The checkout action refuses to put it outside, so we have to do it in
+      # two steps.
+      - name: Checkout coding standard
+        uses: actions/checkout@v4
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('./composer.json') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
+          repository: backdrop-ops/phpcs
+          ref: 1.0.0-beta1
+          path: phpcs
 
-      - name: Composer install coder_sniffer
-        run: composer install --ansi --prefer-dist --no-interaction --no-progress
+      - name: Move standard outside current dir
+        run: mv phpcs ..
 
-      - name: Backdrop coding standards
-        run: >
-          vendor/bin/phpcs -n
-          --standard=vendor/backdrop/coder/coder_sniffer/Backdrop
-          --ignore="vendor/*,views/paragraphs_handler_relationship.inc,migrate/destinations/MigrateDestinationParagraphsItem.inc,ParagraphsItemEntity.inc"
-          --extensions=install,module,php,inc .
+      - name: Checkout code with full depth
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: thenabeel/action-phpcs@v8
+        with:
+          files: "**.php,**.inc,**.module,**.install,**.profile,**.test"
+          standard: ../phpcs/Backdrop
+          fail_on_warnings: false
+
+  spellcheck:
+    name: Check spelling
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      name: Checkout code
+    - uses: streetsidesoftware/cspell-action@v5
+      name: Run CSpell
+      with:
+        incremental_files_only: true
+        config: '.cspell/cspell.json'
